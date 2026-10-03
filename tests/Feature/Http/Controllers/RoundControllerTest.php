@@ -51,8 +51,22 @@ test('can get round with votes', function () {
         });
 });
 
-test('average is zero on empty votes', function () {
+test('average is hidden while the round is open', function () {
     $round = Round::factory()->for(Room::factory())->create();
+    Vote::factory()->for($round)->create(['vote' => 5]);
+
+    getJson("/api/rounds/{$round->id}")
+        ->assertJson(function (AssertableJson $json) {
+            $json
+                ->has('data.votes_average')
+                ->where('data.votes_average', null)
+                ->where('data.votes_count', 1)
+            ;
+        });
+});
+
+test('average is zero on empty votes', function () {
+    $round = Round::factory()->for(Room::factory())->create(['finished_at' => now()]);
 
     getJson("/api/rounds/{$round->id}")
         ->assertJson(function (AssertableJson $json) {
@@ -64,7 +78,7 @@ test('average is zero on empty votes', function () {
 });
 
 test('average is zero on nulled votes', function () {
-    $round = Round::factory()->for(Room::factory())->create();
+    $round = Round::factory()->for(Room::factory())->create(['finished_at' => now()]);
     Vote::factory()->for($round)->create(['vote' => null]);
 
     getJson("/api/rounds/{$round->id}")
@@ -77,7 +91,7 @@ test('average is zero on nulled votes', function () {
 });
 
 test('average is correctly calculated', function () {
-    $round = Round::factory()->for(Room::factory())->create();
+    $round = Round::factory()->for(Room::factory())->create(['finished_at' => now()]);
     Vote::factory()->for($round)->createMany([
         ['vote' => null],
         ['vote' => 1],
