@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "master" ]
 
+# Um push novo na mesma PR (ou branch) cancela a rodada anterior: não vale
+# gastar runner com commits já superados.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   laravel-tests:
 
